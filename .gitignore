@@ -1,0 +1,9 @@
+dashboards/apps/searchHotspots/search-logs/*csv
+
+dashboards/apps/searchHotspots/db/*
+
+*.pyc
+
+dashboards/dataExtraction/apps
+__pycache__/
+*.ipynb
