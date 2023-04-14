@@ -151,78 +151,76 @@ if __name__ == "__main__":
     today = datetime.datetime.today()
     print(today.day)
     logging.info(f"Starting monthly script at {datetime.datetime.now()}")
-    if today.day == 1:
-        for month in [0]:
-            prev_month_last_day, ago = prev_month_dates(month)
-            print(prev_month_last_day, ago)
-            centers_df = pd.read_csv(
-                "apps/searchHotspots/data/countries_centers(clean).csv"
+
+    for month in [0]:
+        prev_month_last_day, ago = prev_month_dates(month)
+        print(prev_month_last_day, ago)
+        centers_df = pd.read_csv(
+            "apps/searchHotspots/data/countries_centers(clean).csv"
+        )
+
+        # country_ISOs = ["AT"]
+        country_ISOs = centers_df["ISO"].unique().tolist()
+        endpoint_list = (
+            None  # (  ## If you are using only 1 endpoint: 'search 2 search'
+        )
+        #     "search 2 geocode",
+        #     "search 2 search",
+        # )
+        sample = 20_000_000  # Samples and ago should not be higher than 100000 samples/day
+        # ago = '90'  # Maximum look back available -> last 3 months = 90 days
+        exclude_endpoint = (
+            "search 2 nearbySearch",
+            "search 2 reverseGeocode",
+            "search 2 poiSearch",
+        )
+
+        for countries_iso in tqdm(country_ISOs):
+            print(f"Getting records for {countries_iso}")
+            try:
+                responses_dict_requests = utils.address_components_sample_generator(
+                    country_list=[countries_iso],
+                    end=prev_month_last_day,
+                    endpoint_list=endpoint_list,
+                    sample=sample,
+                    ago=ago,
+                    check_query=False,
+                    exclude_endpoint_list=exclude_endpoint,
+                )
+            except Exception as e:
+                print(e)
+                print(f"Could not get records for {countries_iso}")
+                continue
+
+            # for country in [countries_iso]:
+            #     responses_dict_requests[country] = parse_address_and_search_request(
+            #         responses_dict_requests[country]
+            #     )
+
+            try:
+                # Saving the sample
+                utils.general_dbfs_save_function_dict_of_countries(
+                    responses_dict_requests,
+                    "results",
+                    f"search_logs_{prev_month_last_day.month}",
+                )
+            except Exception as e:
+                print(e)
+                print(f"Could not save records for {countries_iso}")
+                continue
+
+            ####  Mapping and GeoJson files Load
+            countries_geos = geopandas.read_file(
+                "apps/searchHotspots/data/countries.geojson",
+                driver="GeoJSON",
             )
 
-            # country_ISOs = ["AT"]
-            country_ISOs = centers_df["ISO"].unique().tolist()
-            endpoint_list = (
-                None  # (  ## If you are using only 1 endpoint: 'search 2 search'
-            )
-            #     "search 2 geocode",
-            #     "search 2 search",
-            # )
-            sample = 20_000_000  # Samples and ago should not be higher than 100000 samples/day
-            # ago = '90'  # Maximum look back available -> last 3 months = 90 days
-            exclude_endpoint = (
-                "search 2 nearbySearch",
-                "search 2 reverseGeocode",
-                "search 2 poiSearch",
-            )
-
-            for countries_iso in tqdm(country_ISOs):
-                print(f"Getting records for {countries_iso}")
-                try:
-                    responses_dict_requests = utils.address_components_sample_generator(
-                        country_list=[countries_iso],
-                        end=prev_month_last_day,
-                        endpoint_list=endpoint_list,
-                        sample=sample,
-                        ago=ago,
-                        check_query=False,
-                        exclude_endpoint_list=exclude_endpoint,
-                    )
-                except Exception as e:
-                    print(e)
-                    print(f"Could not get records for {countries_iso}")
-                    continue
-
-                # for country in [countries_iso]:
-                #     responses_dict_requests[country] = parse_address_and_search_request(
-                #         responses_dict_requests[country]
-                #     )
-
-                try:
-                    # Saving the sample
-                    utils.general_dbfs_save_function_dict_of_countries(
-                        responses_dict_requests,
-                        "results",
-                        f"search_logs_{prev_month_last_day.month}",
-                    )
-                except Exception as e:
-                    print(e)
-                    print(f"Could not save records for {countries_iso}")
-                    continue
-
-                ####  Mapping and GeoJson files Load
-                countries_geos = geopandas.read_file(
-                    "apps/searchHotspots/data/countries.geojson",
-                    driver="GeoJSON",
+            try:
+                grid_process_main(
+                    countries_iso, countries_geos, centers_df, prev_month_last_day
                 )
 
-                try:
-                    grid_process_main(
-                        countries_iso, countries_geos, centers_df, prev_month_last_day
-                    )
-
-                except Exception as e:
-                    print(e)
-                    print(f"Could not get create grid for {countries_iso}")
-                    continue
-    else:
-        print("Not first day of month, going back to sleep")
+            except Exception as e:
+                print(e)
+                print(f"Could not get create grid for {countries_iso}")
+                continue
