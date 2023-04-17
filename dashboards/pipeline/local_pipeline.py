@@ -115,35 +115,26 @@ def grid_process_main(country, countries_geos, centers_df, prev_month):
                 grid_utils.filter_by_region(
                     cell_colors_sums, country_ISO3, center, prev_month, grid_size
                 )
-            else:
-                grid_utils.save_data(
-                    cell_colors_sums, country_ISO3, center, prev_month, grid_size
-                )
-            # grid_utils.save_data(
-            #     cell_colors_sums, country_ISO3, center, prev_month, grid_size
-            # )
 
-            if os.path.exists(
-                f"apps/searchHotspots/search-logs/search_logs_{prev_month.month}_{country}.csv"
-            ):
-                os.remove(
-                    f"apps/searchHotspots/search-logs/search_logs_{prev_month.month}_{country}.csv"
-                )
-                print("file deleted")
+            grid_utils.save_data(
+                cell_colors_sums, country_ISO3, center, prev_month, grid_size
+            )
+
         except Exception as e:
-            if os.path.exists(
-                f"apps/searchHotspots/search-logs/search_logs_{prev_month.month}_{country}.csv"
-            ):
-                os.remove(
-                    f"apps/searchHotspots/search-logs/search_logs_{prev_month.month}_{country}.csv"
-                )
-                print("file deleted")
-
             print(e)
             exc_type, exc_obj, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             print(exc_type, fname, exc_tb.tb_lineno)
             print(f"Error calculating grid for {country_ISO3}")
+
+        finally:
+            if os.path.exists(
+                f"apps/searchHotspots/search-logs/search_logs_{prev_month.month}_{country}.csv"
+            ):
+                os.remove(
+                    f"apps/searchHotspots/search-logs/search_logs_{prev_month.month}_{country}.csv"
+                )
+                print("file deleted")
             continue
 
 
@@ -159,15 +150,15 @@ if __name__ == "__main__":
             "apps/searchHotspots/data/countries_centers(clean).csv"
         )
 
-        # country_ISOs = ["AT"]
+        # country_ISOs = ["US"]
         country_ISOs = centers_df["ISO"].unique().tolist()
         endpoint_list = (
             None  # (  ## If you are using only 1 endpoint: 'search 2 search'
         )
-        #     "search 2 geocode",
-        #     "search 2 search",
-        # )
-        sample = 20_000_000  # Samples and ago should not be higher than 100000 samples/day
+
+        sample = (
+            20_000_000  # Samples and ago should not be higher than 100000 samples/day
+        )
         # ago = '90'  # Maximum look back available -> last 3 months = 90 days
         exclude_endpoint = (
             "search 2 nearbySearch",
