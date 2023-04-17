@@ -86,23 +86,25 @@ st.sidebar.markdown(
         <hr> 
         <ul class="d-legend">
             <li>&nbsp;&nbsp;<div style="float: left; width: 20px; height: 20px; margin: 0px; background: #00FF00;">
-                </div>: P4 
+                </div><b>: P4 </b> 
             </li>
             <li>&nbsp;&nbsp;<div style="float: left; width: 20px; height: 20px; margin: 0px; background: #FFFF00;">
-                </div>: P3
+                </div><b>: P3 </b> 
             </li>
             <li>&nbsp;&nbsp;<div style="float: left; width: 20px; height: 20px; margin: 0px; background: #FFA500;">
-                </div>: P2 
+                </div><b>: P2 </b> 
             </li>
             <li>&nbsp;&nbsp;<div style="float: left; width: 20px; height: 20px; margin: 0px; background: #FF0000;">
-                </div>: P1 
+                </div><b>: P1 </b> 
             </li> 
         </ul> 
     </div> 
     """,
     unsafe_allow_html=True,
 )
-
+col1, col2, col3, = st.columns(3)
+with col1:
+    hide_map = st.checkbox('Hide Visualization')
 # Read the JSON file # -----------------------------------------------------------
 try:
     cell_colors_sums, center = get_country(selected_country)
@@ -114,7 +116,7 @@ try:
     m = folium.Map(location=center, zoom_start=5, prefer_canvas=True)
 
     # Create a layer with the colored rectangles
-    
+
     # Iterate over the cells in the grid and draw a rectangle for each cell
     for color_level in color_map:
         colored_rectangles = folium.FeatureGroup(
@@ -130,14 +132,15 @@ try:
                 color=color_level,
                 weight=0.5,
                 fill=True,
-                tooltip=folium.Tooltip(f"Count:{row['value']} <br> Bounds:{box}"),
+                # tooltip=folium.Tooltip(f"Count:{row['value']} <br> Bounds:{box}"),
             ).add_to(colored_rectangles)
 
         colored_rectangles.add_to(m)
     print("Map generated!!!")
     # Add a layer control widget to the map
-    folium.LayerControl().add_to(m)
-    folium_static(m, width=2048, height=700)
+    if not hide_map:
+        folium.LayerControl().add_to(m)
+        folium_static(m, width=2048, height=700)
 
     st.markdown(
         """
@@ -184,7 +187,9 @@ try:
             ]
             polygon = Polygon(coords)
             polygons.append(polygon)
-        gdf = geopandas.GeoDataFrame(df[["value", "color"]], geometry=polygons, crs="epsg:4326")
+        gdf = geopandas.GeoDataFrame(
+            df[["value", "color"]], geometry=polygons, crs="epsg:4326"
+        )
 
         return gdf
 
@@ -213,12 +218,20 @@ try:
             return open(f"{tmp}/user_shapefiles_zip.zip", "rb")
 
     if not cell_colors_sums.empty:
-        st.download_button(
-            label="Download data as shapefile (.shp)",
-            data=export(selected_country, grid_dict[selected_grid_size]),
-            file_name=f"{selected_country}_{grid_dict[selected_grid_size]}.zip",
-            mime="application/zip",
-        )
+        if "USA" in selected_country:
+            st.download_button(
+                label="Download data as shapefile (.shp)",
+                data=export(selected_country, grid_dict[selected_grid_size]),
+                file_name=f"Full_USA_{grid_dict[selected_grid_size]}.zip",
+                mime="application/zip",
+            )
+        else:
+            st.download_button(
+                label="Download data as shapefile (.shp)",
+                data=export(selected_country, grid_dict[selected_grid_size]),
+                file_name=f"{selected_country}_{grid_dict[selected_grid_size]}.zip",
+                mime="application/zip",
+            )
 
 except Exception as e:
     print(e)
