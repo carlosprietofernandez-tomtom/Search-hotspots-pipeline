@@ -13,7 +13,7 @@ def scheduled_job():
 sched = BlockingScheduler()
 
 
-sched.add_job(scheduled_job, "cron", day="3", hour="1", minute="30")
+sched.add_job(scheduled_job, "cron", day="7", hour="10")
 
 
 sched.start()

@@ -102,9 +102,13 @@ st.sidebar.markdown(
     """,
     unsafe_allow_html=True,
 )
-col1, col2, col3, = st.columns(3)
+(
+    col1,
+    col2,
+    col3,
+) = st.columns(3)
 with col1:
-    hide_map = st.checkbox('Hide Visualization')
+    hide_map = st.checkbox("Hide Visualization")
 # Read the JSON file # -----------------------------------------------------------
 try:
     cell_colors_sums, center = get_country(selected_country)
@@ -205,10 +209,7 @@ try:
         zipObj.close()
 
     def export(selected_country, sel_grid_size):
-        if "USA" in selected_country:
-            export_df = pd.read_csv(f"db/USA/total_{sel_grid_size}.csv")
-        else:
-            export_df = pd.read_csv(f"db/{selected_country}/total_{sel_grid_size}.csv")
+        export_df = pd.read_csv(f"db/{selected_country}/total_{sel_grid_size}.csv")
         export_df["grid_bbox"] = export_df["grid_bbox"].apply(
             lambda x: ast.literal_eval(x)
         )
@@ -218,20 +219,12 @@ try:
             return open(f"{tmp}/user_shapefiles_zip.zip", "rb")
 
     if not cell_colors_sums.empty:
-        if "USA" in selected_country:
-            st.download_button(
-                label="Download data as shapefile (.shp)",
-                data=export(selected_country, grid_dict[selected_grid_size]),
-                file_name=f"Full_USA_{grid_dict[selected_grid_size]}.zip",
-                mime="application/zip",
-            )
-        else:
-            st.download_button(
-                label="Download data as shapefile (.shp)",
-                data=export(selected_country, grid_dict[selected_grid_size]),
-                file_name=f"{selected_country}_{grid_dict[selected_grid_size]}.zip",
-                mime="application/zip",
-            )
+        st.download_button(
+            label="Download data as shapefile (.shp)",
+            data=export(selected_country, grid_dict[selected_grid_size]),
+            file_name=f"{selected_country}_{grid_dict[selected_grid_size]}.zip",
+            mime="application/zip",
+        )
 
 except Exception as e:
     print(e)
